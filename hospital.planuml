@@ -1,0 +1,72 @@
+@startuml
+skinparam style strictuml
+
+sprite $interruptzigzag [16x16/16] {
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+000FFFFFFFFFFF00
+000000000000F000
+00000000000F0000
+0000000000F00000
+000000000F000F00
+00000000F00000F0
+0000000FFFFFFFFF
+00000000000000F0
+0000000000000F00
+0000000000000000
+0000000000000000
+0000000000000000
+}
+
+|ConsumoDeMedicamento|
+
+
+start
+
+note right
+    El flujo de actividades del proceso
+    arranca con un paciente siendo 
+    atendido por un médico.
+end note
+
+:ConsumoDeMedicamento;
+
+if (esOncologico?) then (yes)
+    :CargaDeConsumo;
+else (no)
+    stop
+endif
+|#AntiqueWhite|CargaDeConsumo|
+:RegistroEnHistoriaClinica;
+    fork
+        :ActualizaStock;
+    fork again
+        :ActualizaEstado;
+    endfork
+:ActualizarSotck;
+
+|RegistroDeContabilidad|
+
+:RegistroParaFacturacion;
+partition ErrorEnConciliacion{
+    :ConciliarFacturacion;
+
+    note right
+        Ejecuta el proceso interno, donde se cruzan
+        los datos de cantidad de medicamentos, estados
+        (oncológico, consumido o no) y la cantidad 
+        facturada.
+    end note
+
+    if (errorProcesoConciliacion?) then (yes)
+        #pink:RegistrarErrorConciliacion;
+        #pink:NotificarErrorConciliacion;
+        -> <$interruptzigzag>;
+        end
+    endif
+}
+:GeneracionReporte;
+stop
+@enduml
